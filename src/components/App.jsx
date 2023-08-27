@@ -1,52 +1,49 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import { nanoid } from 'nanoid';
 import ContactForm from './ContactForm/ContactForm';
 import ContactList from './ContactList/ContactList';
 import Filter from './Filter/Filter';
 
-class App extends Component {
-  state = {
-    contacts: [],
-    filter: localStorage.getItem('filter') || '',
-    name: '',
-    number: '',
-  };
+const App = () => {
+  const [contacts, setContacts] = useState([]);
+  const [filter, setFilter] = useState(localStorage.getItem('filter') || '');
+  const [name, setName] = useState('');
+  const [number, setNumber] = useState('');
 
-  componentDidMount() {
+  useEffect(() => {
     const savedContacts = localStorage.getItem('contacts');
     const savedFilter = localStorage.getItem('filter');
 
     if (savedContacts) {
-      this.setState({ contacts: JSON.parse(savedContacts) });
+      setContacts(JSON.parse(savedContacts));
     }
 
     if (savedFilter) {
-      this.setState({ filter: savedFilter });
+      setFilter(savedFilter);
     }
-  }
+  }, []);
 
-  componentDidUpdate() {
-    localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    localStorage.setItem('filter', this.state.filter);
-  }
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+    localStorage.setItem('filter', filter);
+  }, [contacts, filter]);
 
-  handleNameChange = event => {
+  const handleNameChange = event => {
     const newName = event.target.value;
     if (/^[a-zA-Zа-яА-Я]+([ '-][a-zA-Zа-яА-Я ]*)*$/.test(newName) || newName === '') {
-      this.setState({ name: newName });
+      setName(newName);
     }
   };
 
-  handleNumberChange = event => {
+  const handleNumberChange = event => {
     const newNumber = event.target.value;
     if (/^\+?\d{1,4}[-.\s]?\(?\d{1,3}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/.test(newNumber) || newNumber === '') {
-      this.setState({ number: newNumber });
+      setNumber(newNumber);
     }
   };
 
-  handleAddContact = event => {
+  const handleAddContact = event => {
     event.preventDefault();
-    const { name, number, contacts } = this.state;
     if (name.trim() === '' || number.trim() === '') return;
 
     const existingContact = contacts.find(contact => contact.name === name);
@@ -61,45 +58,38 @@ class App extends Component {
       number,
     };
 
-    this.setState(prevState => ({
-      contacts: [...prevState.contacts, newContact],
-      name: '',
-      number: '',
-    }));
+    setContacts(prevContacts => [...prevContacts, newContact]);
+    setName('');
+    setNumber('');
   };
 
-  handleFilterChange = newFilterValue => {
-    this.setState({ filter: newFilterValue });
+  const handleFilterChange = newFilterValue => {
+    setFilter(newFilterValue);
   };
 
-  handleDeleteContact = id => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== id),
-    }));
+  const handleDeleteContact = id => {
+    setContacts(prevContacts => prevContacts.filter(contact => contact.id !== id));
   };
 
-  render() {
-    const { contacts, filter, name, number } = this.state;
-    const filteredContacts = contacts.filter(contact =>
-      contact.name.toLowerCase().includes(filter.toLowerCase())
-    );
+  const filteredContacts = contacts.filter(contact =>
+    contact.name.toLowerCase().includes(filter.toLowerCase())
+  );
 
-    return (
-      <div>
-        <h1>Phonebook</h1>
-        <ContactForm
-          name={name}
-          number={number}
-          onNameChange={this.handleNameChange}
-          onNumberChange={this.handleNumberChange}
-          onAddContact={this.handleAddContact}
-        />
-        <Filter filterValue={filter} onFilterChange={this.handleFilterChange} />
-        <h2>Contacts</h2>
-        <ContactList contacts={filteredContacts} onDeleteContact={this.handleDeleteContact} />
-      </div>
-    );
-  }
-}
+  return (
+    <div>
+      <h1>Phonebook</h1>
+      <ContactForm
+        name={name}
+        number={number}
+        onNameChange={handleNameChange}
+        onNumberChange={handleNumberChange}
+        onAddContact={handleAddContact}
+      />
+      <Filter filterValue={filter} onFilterChange={handleFilterChange} />
+      <h2>Contacts</h2>
+      <ContactList contacts={filteredContacts} onDeleteContact={handleDeleteContact} />
+    </div>
+  );
+};
 
 export default App;
